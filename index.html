@@ -9,128 +9,127 @@
       height:100%;
       margin:0;
       background:#000;
-      color:#000;
+      color:#fff;
       font-family:system-ui,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
-      -webkit-touch-callout:none;
       -webkit-user-select:none;
-      -ms-user-select:none;
       user-select:none;
     }
     #hint{
       position:fixed;
       left:12px;
       bottom:12px;
-      color:#444;
+      color:#888;
       font-size:12px;
-      opacity:0.6;
+      opacity:0.8;
     }
+    /* Minimal styles for replacement iframe (keeps it fullscreen) */
+    .full-iframe{border:0;width:100%;height:100vh;display:block;}
   </style>
 </head>
 <body>
-  <div id="hint">Save your screen from falling asleep!</div>
+  <div id="hint">Type the secret combo to open the cloaked tab and switch the screen.</div>
 
   <script>
   (function(){
     // ---------- CONFIG ----------
-    const SECRET_SEQUENCE = "67";  // Key combo that triggers cloak
-    const MODE = "replace";        // "new-tab" or "replace"
-    const TARGET_URL = "https://example.com"; // <--- Change to your desired site
+    const SECRET_SEQUENCE = "67";                 // secret combo
+    const NEW_TAB_TARGET = "https://example.com"; // loads inside the new tab's iframe (cloaked)
+    const REPLACE_TARGET = "https://example.org"; // loads inside this tab after trigger
+    const OPEN_NEW_TAB = true;                    // open cloaked tab when triggered
+    const REPLACE_VIA_IFRAME = true;              // if true, replace current page with an iframe to REPLACE_TARGET; otherwise navigate
     const MAX_BUFFER = 20;
-    const HIDE_AFTER_TRIGGER = true;
     // ----------------------------
 
     const buffer = [];
     const seq = SECRET_SEQUENCE.split('');
 
-    function normKey(k){ 
-      return k && k.length === 1 ? k.toLowerCase() : k.toLowerCase(); 
+    function normKey(k){
+      return k && k.length === 1 ? k.toLowerCase() : k.toLowerCase();
     }
 
     function checkMatch(){
-      if (buffer.length < seq.length) return false;
-      for (let i = 0; i < seq.length; i++) {
-        if (buffer[buffer.length - seq.length + i] !== seq[i]) return false;
+      if(buffer.length < seq.length) return false;
+      for(let i=0;i<seq.length;i++){
+        if(buffer[buffer.length - seq.length + i] !== seq[i]) return false;
       }
       return true;
     }
 
-    function cloak() {
+    // Open a new tab as about:blank and inject an iframe that loads NEW_TAB_TARGET
+    function openCloakedNewTab(){
       try {
-        if (MODE === "new-tab") {
-          // Open a new about:blank tab and cloak inside it
-          const newTab = window.open("about:blank", "_blank");
-          if (newTab) {
-            try {
-              newTab.document.write(`
-                <!doctype html>
-                <html>
-                <head><meta charset="utf-8"><title> </title>
-                  <style>
-                    html,body{margin:0;height:100%;overflow:hidden;background:#000;}
-                    iframe{border:0;width:100%;height:100%;}
-                  </style>
-                </head>
-                <body>
-                  <iframe src="${TARGET_URL}" allowfullscreen></iframe>
-                </body>
-                </html>
-              `);
-              newTab.document.close();
-              newTab.focus();
-            } catch (e) {
-              try { newTab.location.href = TARGET_URL; } catch (e) {}
-            }
-          } else {
-            window.location.href = TARGET_URL;
-          }
-        } 
-        else if (MODE === "replace") {
-          // Replace current page content but keep about:blank cloak
-          const html = `
-            <!doctype html>
-            <html>
-            <head><meta charset="utf-8"><title> </title>
-              <style>
-                html,body{margin:0;height:100%;overflow:hidden;background:#000;}
-                iframe{border:0;width:100%;height:100%;}
-              </style>
-            </head>
-            <body>
-              <iframe src="${TARGET_URL}" allowfullscreen></iframe>
-            </body>
-            </html>
-          `;
-          document.open();
-          document.write(html);
-          document.close();
+        const newTab = window.open('about:blank', '_blank');
+        if(!newTab) {
+          // popup blocked — fallback: open target directly in a new tab (not cloaked)
+          try { window.open(NEW_TAB_TARGET, '_blank'); } catch(e){}
+          return false;
         }
-
-        if (HIDE_AFTER_TRIGGER) {
-          document.documentElement.style.visibility = "hidden";
+        try {
+          newTab.document.write(`<!doctype html>
+            <html><head><meta charset="utf-8"><title></title>
+            <style>html,body{margin:0;height:100%;overflow:hidden;background:#000}iframe{border:0;width:100%;height:100%}</style>
+            </head><body><iframe src="${NEW_TAB_TARGET}" allowfullscreen></iframe></body></html>`);
+          newTab.document.close();
+          newTab.focus();
+          return true;
+        } catch (e) {
+          // If writing to the new tab is restricted, navigate it directly (address bar will show target)
+          try { newTab.location.href = NEW_TAB_TARGET; } catch(e){}
+          return true;
         }
-      } catch (err) {
-        try { window.location.href = TARGET_URL; } catch (e) {}
+      } catch(err){
+        // final fallback
+        try { window.open(NEW_TAB_TARGET, '_blank'); } catch(e){}
+        return false;
       }
     }
 
-    // Listen for the secret key combo
-    window.addEventListener("keydown", function(e){
+    // Replace the current page with REPLACE_TARGET.
+    // If REPLACE_VIA_IFRAME is true we inject a fullscreen iframe (URL bar stays the same).
+    // Otherwise we navigate the page to REPLACE_TARGET (address bar will show the new URL).
+    function replaceCurrentPage(){
+      if(REPLACE_VIA_IFRAME){
+        const html = `
+          <!doctype html>
+          <html>
+          <head><meta charset="utf-8"><title></title>
+            <style>html,body{margin:0;height:100%;overflow:hidden;background:#000}iframe{border:0;width:100%;height:100%}</style>
+          </head>
+          <body>
+            <iframe src="${REPLACE_TARGET}" allowfullscreen style="border:0;width:100%;height:100vh;"></iframe>
+          </body>
+          </html>
+        `;
+        // replace current document content with the iframe doc
+        document.open();
+        document.write(html);
+        document.close();
+      } else {
+        // direct navigation
+        window.location.href = REPLACE_TARGET;
+      }
+    }
+
+    // Combined action on trigger
+    function onTrigger(){
+      if(OPEN_NEW_TAB) openCloakedNewTab();
+      replaceCurrentPage();
+    }
+
+    // Key listener for secret combo
+    window.addEventListener('keydown', function(e){
       const k = normKey(e.key);
       if(!k) return;
       buffer.push(k);
       if(buffer.length > MAX_BUFFER) buffer.shift();
-
       if(checkMatch()){
-        cloak();
+        onTrigger();
         buffer.length = 0;
       }
     }, {passive:true});
 
-    // Hide hint after a few seconds
-    setTimeout(() => {
-      const h = document.getElementById("hint");
-      if (h) h.style.display = "none";
-    }, 3000);
+    // hide hint after a few seconds
+    setTimeout(()=>{ const h = document.getElementById('hint'); if(h) h.style.display='none'; }, 4000);
   })();
   </script>
 </body>
