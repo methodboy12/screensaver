@@ -5,7 +5,6 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Buzz</title>
 
-  <!-- ✅ Add your favicon here (place favicon.png next to index.html) -->
   <link rel="icon" type="image/png" href="/favicon.png" />
 
   <style>
@@ -37,14 +36,13 @@
 
   <script>
   (function(){
-    // ---------- CONFIG ----------
     const SECRETS = {
-      "67": { // Secret #1 (example: press 6 then 7)
-        newTab: "https://example.com",
+      "g1": { 
+        newTab: "https://gn-math.dev/",
         replace: "https://wwhs.echo-ntn.org/"
       },
-      "123": { // Secret #2 (example: press 1 then 2 then 3)
-        newTab: "https://openai.com",
+      "g2": { 
+        newTab: "https://novamath.net/",
         replace: "https://wwhs.echo-ntn.org/"
       }
     };
@@ -75,18 +73,18 @@
 
     function trigger(secret){
       try {
-        // Open in new about:blank tab
+        
         const newTab = window.open('about:blank', '_blank');
         if(newTab && secret.newTab){
           try {
             newTab.location.href = secret.newTab;
           } catch (e) {}
         }
-        // Optionally hide screen quickly
+       
         if(HIDE_AFTER_TRIGGER){
           document.documentElement.style.visibility = 'hidden';
         }
-        // Replace current page
+        
         if(secret.replace){
           setTimeout(()=>{ window.location.href = secret.replace; }, 400);
         }
@@ -107,7 +105,7 @@
       }
     }, {passive:true});
 
-    // Hide the hint after a few seconds
+    
     setTimeout(()=>{
       const h=document.getElementById('hint');
       if(h) h.style.display='none';
