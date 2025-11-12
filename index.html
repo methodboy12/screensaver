@@ -9,68 +9,77 @@
       height:100%;
       margin:0;
       background:#000;
-      color:#000;
+      color:#fff;
       font-family:system-ui,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
+      -webkit-user-select:none;
       user-select:none;
     }
     #hint{
       position:fixed;
       left:12px;
       bottom:12px;
-      color:#444;
+      color:#888;
       font-size:12px;
-      opacity:0.6;
+      opacity:0.9;
     }
   </style>
 </head>
 <body>
-  <div id="hint">Save your screen from falling asleep!</div>
+  <div id="hint">Type the secret combo to switch pages.</div>
 
   <script>
   (function(){
     // ---------- CONFIG ----------
-    const SECRET_SEQUENCE = "67";      // key combo that triggers navigation
-    const TARGET_URL = "https://example.com"; // link to switch to
+    const SECRET_SEQUENCE = "67";               // secret combo (change as desired)
+    const TARGET_URL = "https://example.com";   // the site to navigate to (change to your URL)
+    const USE_REPLACE = true;                   // true -> location.replace(TARGET_URL) (no history); false -> location.href = TARGET_URL
     const MAX_BUFFER = 20;
     // ----------------------------
 
     const buffer = [];
     const seq = SECRET_SEQUENCE.split('');
 
-    function normKey(k){ 
-      return k && k.length === 1 ? k.toLowerCase() : k.toLowerCase(); 
+    function normKey(k){
+      if(!k) return '';
+      return k.length === 1 ? k.toLowerCase() : k.toLowerCase();
     }
 
     function checkMatch(){
-      if (buffer.length < seq.length) return false;
-      for (let i = 0; i < seq.length; i++) {
-        if (buffer[buffer.length - seq.length + i] !== seq[i]) return false;
+      if(buffer.length < seq.length) return false;
+      for(let i=0;i<seq.length;i++){
+        if(buffer[buffer.length - seq.length + i] !== seq[i]) return false;
       }
       return true;
     }
 
-    function switchPage() {
-      // simply navigate the current tab
-      window.location.href = TARGET_URL;
+    function switchToTarget(){
+      try {
+        if(USE_REPLACE) {
+          // Replace current entry in session history (so Back won't return here)
+          location.replace(TARGET_URL);
+        } else {
+          // Normal navigation (adds to history)
+          location.href = TARGET_URL;
+        }
+      } catch (e) {
+        // Fallback: try assign
+        try { location.assign(TARGET_URL); } catch (err) {}
+      }
     }
 
-    window.addEventListener("keydown", function(e){
+    window.addEventListener('keydown', function(e){
       const k = normKey(e.key);
       if(!k) return;
       buffer.push(k);
       if(buffer.length > MAX_BUFFER) buffer.shift();
-
       if(checkMatch()){
-        switchPage();
+        switchToTarget();
         buffer.length = 0;
       }
     }, {passive:true});
 
-    // Hide hint after a few seconds
-    setTimeout(() => {
-      const h = document.getElementById("hint");
-      if (h) h.style.display = "none";
-    }, 3000);
+    // hide hint after a few seconds
+    setTimeout(()=>{ const h = document.getElementById('hint'); if(h) h.style.display='none'; }, 3500);
   })();
   </script>
 </body>
