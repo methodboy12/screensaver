@@ -5,29 +5,31 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Buzz</title>
 
+  <!-- ✅ Favicon (put favicon.png or favicon.ico next to index.html) -->
   <link rel="icon" type="image/png" href="/favicon.png" />
 
   <style>
-    html,body{
-      height:100%;
-      margin:0;
-      background:#000;
-      color:#fff;
-      font-family:system-ui,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
-      -webkit-user-select:none;
-      user-select:none;
-      display:flex;
-      justify-content:center;
-      align-items:center;
-      flex-direction:column;
+    html, body {
+      height: 100%;
+      margin: 0;
+      background: #000;
+      color: #fff;
+      font-family: system-ui, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+      -webkit-user-select: none;
+      user-select: none;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      flex-direction: column;
     }
-    #hint{
-      position:fixed;
-      bottom:12px;
-      left:12px;
-      color:#444;
-      font-size:12px;
-      opacity:0.8;
+
+    #hint {
+      position: fixed;
+      bottom: 12px;
+      left: 12px;
+      color: #444;
+      font-size: 12px;
+      opacity: 0.8;
     }
   </style>
 </head>
@@ -36,12 +38,13 @@
 
   <script>
   (function(){
+    // ---------- CONFIG ----------
     const SECRETS = {
-      "g1": { 
+      "g1": {
         newTab: "https://gn-math.dev/",
         replace: "https://wwhs.echo-ntn.org/"
       },
-      "g2": { 
+      "g2": {
         newTab: "https://novamath.net/",
         replace: "https://wwhs.echo-ntn.org/"
       }
@@ -51,65 +54,78 @@
     const HIDE_AFTER_TRIGGER = true;
     const buffer = [];
 
-    function normKey(k){
-      if(!k) return '';
-      return k.length === 1 ? k.toLowerCase() : k.toLowerCase();
+    // Normalize key (make lowercase)
+    function normKey(k) {
+      return k && k.length === 1 ? k.toLowerCase() : "";
     }
 
-    function checkSecrets(){
-      for(const code in SECRETS){
-        const seq = code.split('');
-        if(buffer.length < seq.length) continue;
+    // Check if typed keys match any secret
+    function checkSecrets() {
+      for (const code in SECRETS) {
+        const seq = code.split("");
+        if (buffer.length < seq.length) continue;
         let match = true;
-        for(let i=0;i<seq.length;i++){
-          if(buffer[buffer.length - seq.length + i] !== seq[i]){
-            match = false; break;
+        for (let i = 0; i < seq.length; i++) {
+          if (buffer[buffer.length - seq.length + i] !== seq[i]) {
+            match = false;
+            break;
           }
         }
-        if(match) return SECRETS[code];
+        if (match) return SECRETS[code];
       }
       return null;
     }
 
-    function trigger(secret){
+    // Trigger behavior for matching secret
+    function trigger(secret) {
       try {
-        
-        const newTab = window.open('about:blank', '_blank');
-        if(newTab && secret.newTab){
-          try {
-            newTab.location.href = secret.newTab;
-          } catch (e) {}
+        // ✅ Open about:blank tab and inject redirect
+        const newTab = window.open("about:blank", "_blank");
+        if (newTab && secret.newTab) {
+          const redirectHTML = `
+            <!doctype html><html><head>
+            <meta http-equiv="refresh" content="0; url=${secret.newTab}">
+            </head><body style="background:#000;color:#fff;text-align:center;padding-top:40vh;font-family:sans-serif;">
+              Redirecting...
+            </body></html>`;
+          newTab.document.write(redirectHTML);
+          newTab.document.close();
         }
-       
-        if(HIDE_AFTER_TRIGGER){
-          document.documentElement.style.visibility = 'hidden';
+
+        // Hide this page visually
+        if (HIDE_AFTER_TRIGGER) {
+          document.documentElement.style.visibility = "hidden";
         }
-        
-        if(secret.replace){
-          setTimeout(()=>{ window.location.href = secret.replace; }, 400);
+
+        // Navigate this page elsewhere
+        if (secret.replace) {
+          setTimeout(() => {
+            window.location.href = secret.replace;
+          }, 400);
         }
       } catch (err) {
         console.error(err);
       }
     }
 
-    window.addEventListener('keydown', e => {
+    // Key sequence listener
+    window.addEventListener("keydown", e => {
       const k = normKey(e.key);
-      if(!k) return;
+      if (!k) return;
       buffer.push(k);
-      if(buffer.length > MAX_BUFFER) buffer.shift();
+      if (buffer.length > MAX_BUFFER) buffer.shift();
       const secret = checkSecrets();
-      if(secret){
+      if (secret) {
         trigger(secret);
         buffer.length = 0;
       }
-    }, {passive:true});
+    }, { passive: true });
 
-    
-    setTimeout(()=>{
-      const h=document.getElementById('hint');
-      if(h) h.style.display='none';
-    },3000);
+    // Hide hint after a short time
+    setTimeout(() => {
+      const h = document.getElementById("hint");
+      if (h) h.style.display = "none";
+    }, 3000);
   })();
   </script>
 </body>
