@@ -103,6 +103,7 @@
 
   const indicator = document.getElementById('linkIndicator');
   indicator.textContent = REPLACE_TARGET;
+  document.title = REPLACE_TARGET;
 
   const saver = document.getElementById("screensaver");
   const modes = ["mode1","mode2","mode3"];
@@ -190,6 +191,7 @@
       i = (i + 1) % REPLACEMENTS.length;
       REPLACE_TARGET = REPLACEMENTS[i];
       indicator.textContent = REPLACE_TARGET;
+      document.title = REPLACE_TARGET;
       return;
     }
 
