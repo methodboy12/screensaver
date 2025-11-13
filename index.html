@@ -38,7 +38,6 @@
     left:0;
     width:100vw;
     height:100vh;
-    background:black;
     z-index:-1;
   }
   .mode1{
@@ -96,11 +95,8 @@
     return "Redirecting";
   }
 
-  let i = 0;
+  let i = parseInt(localStorage.getItem("selectedLinkIndex")) || 0;
   let REPLACE_TARGET = REPLACEMENTS[i];
-
-  const buffer = [];
-  const MAX_BUFFER = 20;
 
   const indicator = document.getElementById('linkIndicator');
   indicator.textContent = REPLACE_TARGET;
@@ -113,12 +109,12 @@
 
   function enableScreensaver(){
     active = true;
-    saver.classList.add(modes[modeIndex]);
+    saver.className = modes[modeIndex];
   }
   function disableScreensaver(){
     active = false;
     saver.className = "";
-    saver.style.background = "black";
+    saver.style.background = "#000";
   }
   disableScreensaver();
 
@@ -130,17 +126,21 @@
   }
   setInterval(cycleMode, 8000);
 
+  const buffer = [];
+  const MAX_BUFFER = 20;
   function norm(k){ return k ? k.toLowerCase() : ""; }
 
   function findSecret(){
     for(const s of SECRETS){
       const seq = s.code.split("");
       if(buffer.length < seq.length) continue;
-      let good = true;
+      let ok = true;
       for(let j=0;j<seq.length;j++){
-        if(buffer[buffer.length - seq.length + j] !== seq[j]){ good = false; break; }
+        if(buffer[buffer.length-seq.length+j] !== seq[j]){
+          ok=false; break;
+        }
       }
-      if(good) return s;
+      if(ok) return s;
     }
     return null;
   }
@@ -151,12 +151,11 @@
       tab = window.open("about:blank","_blank");
       if(!tab){ window.open(target,"_blank"); return; }
       const html = `
-        <!doctype html><html><head><meta charset="utf-8">
-        <meta name="viewport" content="width=device-width,initial-scale=1">
-        <style>html,body{margin:0;height:100%;background:#000}
-        iframe{border:0;width:100%;height:100%}</style></head>
-        <body><iframe src="${target}" allowfullscreen
-        sandbox="allow-forms allow-scripts allow-same-origin allow-popups"></iframe></body></html>`;
+      <!doctype html><html><head><meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      <style>html,body{margin:0;height:100%;background:#000}
+      iframe{border:0;width:100%;height:100%}</style></head>
+      <body><iframe src="${target}" sandbox="allow-forms allow-scripts allow-same-origin allow-popups"></iframe></body></html>`;
       tab.document.open();
       tab.document.write(html);
       tab.document.close();
@@ -183,6 +182,7 @@
 
     if(k === "l"){
       i = (i + 1) % REPLACEMENTS.length;
+      localStorage.setItem("selectedLinkIndex", i);
       REPLACE_TARGET = REPLACEMENTS[i];
       indicator.textContent = REPLACE_TARGET;
       document.title = mapTitle(REPLACE_TARGET);
