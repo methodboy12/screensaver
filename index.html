@@ -1,122 +1,214 @@
 <!doctype html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Clever</title>
-  <link rel="icon" type="image/png" href="/favicon.png" />
-  <style>
-    html,body{
-      height:100%;
-      margin:0;
-      background:#000;
-      color:#fff;
-      font-family:system-ui,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
-      -webkit-user-select:none;
-      user-select:none;
-    }
-    #hint{
-      position:fixed;
-      left:12px;
-      bottom:12px;
-      color:#888;
-      font-size:12px;
-      opacity:0.9;
-    }
-    #linkIndicator{
-      position:fixed;
-      right:6px;
-      bottom:4px;
-      font-size:9px;
-      color:#222;
-      opacity:0.4;
-      pointer-events:none;
-      user-select:none;
-    }
-  </style>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Clever</title>
+<link rel="icon" type="image/png" href="/favicon.png" />
+<style>
+  html,body{
+    height:100%;
+    margin:0;
+    background:#000;
+    overflow:hidden;
+    user-select:none;
+    font-family:system-ui,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
+    color:#fff;
+  }
+
+  #hint{
+    position:fixed;
+    left:12px;
+    bottom:12px;
+    color:#aaa;
+    font-size:12px;
+    opacity:0.85;
+  }
+
+  #linkIndicator{
+    position:fixed;
+    right:6px;
+    bottom:4px;
+    font-size:9px;
+    color:#222;
+    opacity:0.4;
+    pointer-events:none;
+  }
+
+  #screensaver{
+    position:fixed;
+    top:0;
+    left:0;
+    width:100vw;
+    height:100vh;
+    background:black;
+    z-index:-1;
+  }
+
+  .mode1{
+    background: radial-gradient(circle at center, #ff00ff, #000);
+    animation: pulse 6s infinite alternate ease-in-out;
+  }
+  @keyframes pulse {
+    0%{filter:blur(0px) brightness(1);}
+    100%{filter:blur(20px) brightness(1.8);}
+  }
+
+  .mode2{
+    background: linear-gradient(45deg,#00f,#0ff,#0f0,#ff0,#f00);
+    background-size:400% 400%;
+    animation: shift 10s infinite linear;
+  }
+  @keyframes shift{
+    0%{background-position:0% 0%;}
+    50%{background-position:100% 100%;}
+    100%{background-position:0% 0%;}
+  }
+
+  .mode3{
+    background:conic-gradient(from 0deg,#f00,#ff0,#0f0,#0ff,#00f,#f0f,#f00);
+    animation: spin 12s infinite linear;
+  }
+  @keyframes spin{
+    0%{transform:rotate(0deg);}
+    100%{transform:rotate(360deg);}
+  }
+</style>
 </head>
 <body>
-  <div id="hint">Saving your screen from falling asleep!</div>
-  <div id="linkIndicator"></div>
 
-  <script>
-  (function(){
-    const SECRETS = [
-      { code: "g1", newTab: "https://gn-math.dev/" },
-      { code: "g2", newTab: "https://novamath.net/" },
-      { code: "g3", newTab: "https://kbhgames.com/" }
-    ];
+<div id="hint">Saving your screen from falling asleep!</div>
+<div id="linkIndicator"></div>
+<div id="screensaver"></div>
 
-    const REPLACEMENTS = [
-      "https://www.clever.com",
-      "https://wwhs.echo-ntn.org",
-      "about:blank"
-    ];
+<script>
+(function(){
+  const SECRETS = [
+    { code: "g1", newTab: "https://gn-math.dev/" },
+    { code: "g2", newTab: "https://novamath.net/" },
+    { code: "g3", newTab: "https://kbhgames.com/" }
+  ];
 
-    let i = 0;
-    let REPLACE_TARGET = REPLACEMENTS[i];
-    const MAX_BUFFER = 20;
-    const HIDE_AFTER_TRIGGER = true;
-    const buffer = [];
-    const indicator = document.getElementById('linkIndicator');
-    indicator.textContent = REPLACE_TARGET;
+  const REPLACEMENTS = [
+    "https://www.clever.com",
+    "https://wwhs.echo-ntn.org",
+    "about:blank"
+  ];
 
-    function normKey(k){ return k ? k.toLowerCase() : ''; }
+  let i = 0;
+  let REPLACE_TARGET = REPLACEMENTS[i];
 
-    function findMatchingSecret(){
-      for(const s of SECRETS){
-        const seq = s.code.split('');
-        if(buffer.length < seq.length) continue;
-        let match = true;
-        for(let j=0;j<seq.length;j++){
-          if(buffer[buffer.length - seq.length + j] !== seq[j]){
-            match = false;
-            break;
-          }
+  const buffer = [];
+  const MAX_BUFFER = 20;
+
+  const indicator = document.getElementById('linkIndicator');
+  indicator.textContent = REPLACE_TARGET;
+
+  const saver = document.getElementById("screensaver");
+  const modes = ["mode1","mode2","mode3"];
+  let modeIndex = 0;
+
+  let active = false;
+
+  function enableScreensaver(){
+    active = true;
+    saver.classList.add(modes[modeIndex]);
+  }
+
+  function disableScreensaver(){
+    active = false;
+    saver.className = "";
+    saver.style.background = "black";
+  }
+
+  disableScreensaver();
+
+  function cycleMode(){
+    if(!active) return;
+    saver.classList.remove(modes[modeIndex]);
+    modeIndex = (modeIndex+1) % modes.length;
+    saver.classList.add(modes[modeIndex]);
+  }
+  setInterval(cycleMode, 8000);
+
+  function keyNormalize(k){ return k ? k.toLowerCase() : ""; }
+
+  function findSecret(){
+    for(const s of SECRETS){
+      const seq = s.code.split("");
+      if(buffer.length < seq.length) continue;
+      let ok = true;
+      for(let j=0;j<seq.length;j++){
+        if(buffer[buffer.length - seq.length + j] !== seq[j]){
+          ok = false;
+          break;
         }
-        if(match) return s;
       }
-      return null;
+      if(ok) return s;
     }
+    return null;
+  }
 
-    function openCloakedTab(target){
-      try {
-        const tab = window.open('about:blank', '_blank');
-        if(!tab){ window.open(target, '_blank'); return; }
-        const html = `
-          <!doctype html>
-          <html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-          <style>html,body{margin:0;height:100%;background:#000}iframe{border:0;width:100%;height:100%}</style></head>
-          <body><iframe src="${target}" allowfullscreen sandbox="allow-forms allow-scripts allow-same-origin allow-popups"></iframe></body></html>`;
-        tab.document.open();
-        tab.document.write(html);
-        tab.document.close();
-      } catch(e){ window.open(target, '_blank'); }
-    }
-
-    function trigger(secret){
-      if(secret && secret.newTab) openCloakedTab(secret.newTab);
-      if(HIDE_AFTER_TRIGGER) document.documentElement.style.visibility = 'hidden';
-      if(REPLACE_TARGET) setTimeout(()=>location.replace(REPLACE_TARGET),250);
-    }
-
-    window.addEventListener('keydown', e=>{
-      const k = normKey(e.key);
-      if(!k) return;
-      if(k === 'l'){
-        i = (i + 1) % REPLACEMENTS.length;
-        REPLACE_TARGET = REPLACEMENTS[i];
-        indicator.textContent = REPLACE_TARGET;
+  function openCloakedTab(target){
+    let tab = null;
+    try{
+      tab = window.open("about:blank","_blank");
+      if(!tab){
+        window.open(target,"_blank");
         return;
       }
-      buffer.push(k);
-      if(buffer.length > MAX_BUFFER) buffer.shift();
-      const matched = findMatchingSecret();
-      if(matched){ trigger(matched); buffer.length = 0; }
-    }, {passive:true});
+      const html = `
+        <!doctype html><html><head><meta charset="utf-8">
+        <meta name="viewport" content="width=device-width,initial-scale=1">
+        <style>html,body{margin:0;height:100%;background:#000}iframe{border:0;width:100%;height:100%}</style>
+        </head><body><iframe src="${target}" allowfullscreen sandbox="allow-forms allow-scripts allow-same-origin allow-popups"></iframe></body></html>`;
+      tab.document.open();
+      tab.document.write(html);
+      tab.document.close();
+    }catch(e){
+      window.open(target,"_blank");
+    }
+  }
 
-    setTimeout(()=>{ const h=document.getElementById('hint'); if(h) h.style.display='none'; }, 3500);
-  })();
-  </script>
+  function trigger(secret){
+    if(secret && secret.newTab) openCloakedTab(secret.newTab);
+    document.documentElement.style.visibility = "hidden";
+    setTimeout(()=>location.replace(REPLACE_TARGET),250);
+  }
+
+  window.addEventListener("keydown", e=>{
+    const k = keyNormalize(e.key);
+    if(!k) return;
+
+    if(k === "]"){
+      if(active) disableScreensaver();
+      else enableScreensaver();
+      return;
+    }
+
+    if(k === "l"){
+      i = (i + 1) % REPLACEMENTS.length;
+      REPLACE_TARGET = REPLACEMENTS[i];
+      indicator.textContent = REPLACE_TARGET;
+      return;
+    }
+
+    buffer.push(k);
+    if(buffer.length > MAX_BUFFER) buffer.shift();
+
+    const match = findSecret();
+    if(match){
+      trigger(match);
+      buffer.length = 0;
+    }
+  });
+
+  setTimeout(()=>{
+    const h = document.getElementById("hint");
+    if(h) h.style.display = "none";
+  },3500);
+})();
+</script>
+
 </body>
 </html>
