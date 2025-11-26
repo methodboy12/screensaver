@@ -44,15 +44,15 @@
     opacity:1;
   }
 </style>
-  <script>
-    function updateFavicon(url){
-      const link = document.querySelector("link[rel='icon']") || document.createElement('link');
-      link.rel = 'icon';
-      link.type = 'image/png';
-      link.href = url;
-      document.head.appendChild(link);
-    }
-  </script>
+<script>
+function updateFavicon(url){
+  const link = document.querySelector("link[rel='icon']") || document.createElement('link');
+  link.rel = 'icon';
+  link.type = 'image/png';
+  link.href = url;
+  document.head.appendChild(link);
+}
+</script>
 </head>
 <body>
 
@@ -62,10 +62,11 @@
 
 <script>
 (function(){
+  // REPLACEMENTS with real site favicons
   const REPLACEMENTS = [
-    { url:"https://www.clever.com", title:"Clever" },
-    { url:"https://wwhs.echo-ntn.org", title:"Buzz" },
-    { url:"about:blank", title:"about:blank" }
+    { url:"https://www.clever.com", title:"Clever", favicon:"https://www.clever.com/favicon.ico" },
+    { url:"https://wwhs.echo-ntn.org", title:"Buzz", favicon:"https://wwhs.echo-ntn.org/favicon.ico" },
+    { url:"about:blank", title:"about:blank", favicon:"/favicon.png" }
   ];
 
   const SECRETS = ["g1","g2","g3","saver","poke","s1","n1"];
@@ -93,9 +94,8 @@
 
   let saverOn = false;
   const modes = ['galaxy','rainbow','pulse'];
-  let mode = 0; // index into modes
+  let mode = 0;
 
-  // galaxy particles
   let galaxyStars = [];
   let mouseX = 0, mouseY = 0, mouseDown = false;
   function initGalaxy(){
@@ -109,7 +109,6 @@
     }));
   }
 
-  // white twinkling stars overlay
   let twinkleStars = [];
   function initTwinkles(){
     twinkleStars = Array.from({length:220}, ()=>({
@@ -129,17 +128,14 @@
     ctx.fillStyle = grad;
     ctx.fillRect(0,0,canvas.width,canvas.height);
 
-    // apply mouse interaction forces
-    const repelRadius = Math.min(canvas.width, canvas.height) * 0.18; // influence radius
-    const repelStrength = mouseDown ? 0.6 : 0.25; // stronger when holding
+    const repelRadius = Math.min(canvas.width, canvas.height) * 0.18;
+    const repelStrength = mouseDown ? 0.6 : 0.25;
 
     for(const s of galaxyStars){
-      // basic motion
       s.x += s.dx * (1 + s.r*0.2);
       s.y += s.dy * (1 + s.r*0.2);
       s.hue = (s.hue + 0.005) % 360;
 
-      // distance to mouse
       const dx = s.x - mouseX;
       const dy = s.y - mouseY;
       const dist = Math.sqrt(dx*dx + dy*dy) + 0.0001;
@@ -150,7 +146,6 @@
         s.dy += (dy / dist) * force;
       }
 
-     
       s.dx *= 0.994;
       s.dy *= 0.994;
 
@@ -210,11 +205,11 @@
   });
   canvas.addEventListener('mousedown', e=>{
     mouseDown = true;
-   
     const impulseRadius = Math.min(canvas.width, canvas.height) * 0.12;
     const impulseStrength = 2.2;
     for(const s of galaxyStars){
-      const dx = s.x - mouseX, dy = s.y - mouseY; const d = Math.sqrt(dx*dx + dy*dy) + 0.0001;
+      const dx = s.x - mouseX, dy = s.y - mouseY;
+      const d = Math.sqrt(dx*dx + dy*dy) + 0.0001;
       if(d < impulseRadius){
         const f = (impulseRadius - d)/impulseRadius * impulseStrength * (0.6 + Math.random()*0.8);
         s.dx += (dx/d) * f; s.dy += (dy/d) * f;
@@ -229,8 +224,6 @@
       if(modes[mode] === 'galaxy') drawGalaxy();
       else if(modes[mode] === 'rainbow') drawRainbow();
       else if(modes[mode] === 'pulse') drawPulse();
-
-      
       drawTwinkles();
     }
     requestAnimationFrame(animate);
@@ -254,13 +247,48 @@
     }
   }
 
-  function openCloakedTab(target){
-    try{
-      const tab = window.open('about:blank','_blank');
-      if(!tab){ window.open(target,'_blank'); return; }
-      const html = `<!doctype html><html><head><meta charset='utf-8'><style>html,body{margin:0;height:100%;background:#000;}iframe{width:100%;height:100%;border:0;}</style></head><body><iframe src='${target}' sandbox="allow-scripts allow-forms allow-same-origin allow-popups" allowfullscreen></iframe></body></html>`;
-      tab.document.open(); tab.document.write(html); tab.document.close();
-    }catch(e){ window.open(target,'_blank'); }
+  // --- NEW openCloakedTab() ---
+  function openCloakedTab(target, faviconURL, title){
+    try {
+        const tab = window.open('about:blank', '_blank');
+        if (!tab) {
+            window.open(target, '_blank');
+            return;
+        }
+        const html = `
+        <!doctype html>
+        <html>
+        <head>
+            <meta charset='utf-8'>
+            <style>
+                html,body{
+                    margin:0;
+                    height:100%;
+                    background:#000;
+                }
+                iframe{
+                    width:100%;
+                    height:100%;
+                    border:0;
+                }
+            </style>
+            <link rel="icon" type="image/x-icon" href="${faviconURL}">
+            <title>${title}</title>
+        </head>
+        <body>
+            <iframe 
+              src='${target}' 
+              sandbox="allow-scripts allow-forms allow-same-origin allow-popups" 
+              allowfullscreen>
+            </iframe>
+        </body>
+        </html>`;
+        tab.document.open();
+        tab.document.write(html);
+        tab.document.close();
+    } catch (e) {
+        window.open(target, '_blank');
+    }
   }
 
   function trigger(code){
@@ -268,7 +296,11 @@
       toggleSaver();
       return;
     }
-    openCloakedTab(maps[code]);
+    openCloakedTab(
+      maps[code],
+      REPLACEMENTS[index].favicon,
+      REPLACEMENTS[index].title
+    );
     document.documentElement.style.visibility = 'hidden';
     setTimeout(()=> location.replace(REPLACEMENTS[index].url), 250);
   }
