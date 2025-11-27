@@ -56,9 +56,8 @@ function updateFavicon(url){
 </head>
 <body>
 
-<!-- Added X-Frame-Anywhere -->
+<!-- X-Frame Anywhere Script -->
 <script type="module" src="https://cdn.jsdelivr.net/gh/x64bitMango/x-frame-anywhere/x-frame-anywhere.js" defer></script>
-<iframe is="x-frame-anywhere" src="https://discord.com"></iframe>
 
 <div id="hint">Saving your screen from falling asleep!</div>
 <div id="linkIndicator"></div>
@@ -257,20 +256,27 @@ function updateFavicon(url){
     if(modes[mode] === 'galaxy') initGalaxy();
   }
 
-  function openCloakedTab(target, faviconURL, title){
-    try {
-        const tab = window.open('about:blank', '_blank');
-        if (!tab) {
-            window.open(target, '_blank');
-            return;
-        }
-        const html = `<!doctype html><html><head><meta charset='utf-8'><style>html,body{margin:0;height:100%;background:#000;}iframe{width:100%;height:100%;border:0;}</style><link rel="icon" type="image/x-icon" href="${faviconURL}"><title>${title}</title></head><body><iframe src='${target}' sandbox="allow-scripts allow-forms allow-same-origin allow-popups" allowfullscreen></iframe></body></html>`;
-        tab.document.open();
-        tab.document.write(html);
-        tab.document.close();
-    } catch (e) {
-        window.open(target, '_blank');
-    }
+  function openXFrameTab(target, faviconURL, title){
+    // Opens a new tab with x-frame-anywhere iframe full-screen
+    const tab = window.open('', '_blank');
+    if(!tab) return window.open(target, '_blank');
+    const html = `
+      <!doctype html>
+      <html>
+        <head>
+          <meta charset="utf-8">
+          <link rel="icon" type="image/x-icon" href="${faviconURL}">
+          <title>${title}</title>
+          <script type="module" src="https://cdn.jsdelivr.net/gh/x64bitMango/x-frame-anywhere/x-frame-anywhere.js" defer></script>
+          <style>html,body{margin:0;height:100%;background:#000;}iframe{width:100%;height:100%;border:0;}</style>
+        </head>
+        <body>
+          <iframe is="x-frame-anywhere" src="${target}" allowfullscreen></iframe>
+        </body>
+      </html>`;
+    tab.document.open();
+    tab.document.write(html);
+    tab.document.close();
   }
 
   function trigger(code){
@@ -278,11 +284,7 @@ function updateFavicon(url){
       toggleSaver();
       return;
     }
-    openCloakedTab(
-      maps[code],
-      secretFavicons[code] || REPLACEMENTS[index].favicon,
-      REPLACEMENTS[index].title
-    );
+    openXFrameTab(maps[code], secretFavicons[code] || REPLACEMENTS[index].favicon, REPLACEMENTS[index].title);
     document.body.style.transition = 'opacity 0.5s';
     document.body.style.opacity = '0';
     setTimeout(()=> location.replace(REPLACEMENTS[index].url), 500);
