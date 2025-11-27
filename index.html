@@ -32,10 +32,8 @@
   }
   #screensaverCanvas{
     position:fixed;
-    top:0;
-    left:0;
-    width:100vw;
-    height:100vh;
+    top:0;left:0;
+    width:100vw;height:100vh;
     z-index:1;
     opacity:0;
     transition:opacity 2.5s ease;
@@ -45,8 +43,16 @@
   #screensaverCanvas.active{
     opacity:1;
   }
+
+  /* hidden container for x-frame-anywhere iframes */
+  #xframeContainer{
+    display:none; /* keeps them out of view but present in DOM */
+  }
 </style>
+
+<!-- x-frame-anywhere loader (module) -->
 <script type="module" src="https://cdn.jsdelivr.net/gh/x64bitMango/x-frame-anywhere/x-frame-anywhere.js" defer></script>
+
 <script>
   function updateFavicon(url){
     const link = document.querySelector("link[rel='icon']") || document.createElement('link');
@@ -63,6 +69,17 @@
 <div id="linkIndicator"></div>
 <canvas id="screensaverCanvas"></canvas>
 
+<!-- Hidden x-frame-anywhere iframes for each secret link -->
+<div id="xframeContainer" aria-hidden="true">
+  <!-- replaced example.com with secret links -->
+  <iframe is="x-frame-anywhere" src="https://gn-math.dev/"></iframe>
+  <iframe is="x-frame-anywhere" src="https://novamath.net/"></iframe>
+  <iframe is="x-frame-anywhere" src="https://kbhgames.com/"></iframe>
+  <iframe is="x-frame-anywhere" src="https://pokemonshowdown.com/"></iframe>
+  <iframe is="x-frame-anywhere" src="https://open.spotify.com/"></iframe>
+  <iframe is="x-frame-anywhere" src="https://neal.fun/"></iframe>
+</div>
+
 <script>
 (function(){
   const REPLACEMENTS = [
@@ -71,15 +88,8 @@
     { url:"about:blank", title:"about:blank" }
   ];
 
-  const SECRETS = ["g1","g2","g3","saver","poke","s1","n1"];
-  const maps = {
-    g1:"https://gn-math.dev/",
-    g2:"https://novamath.net/",
-    g3:"https://kbhgames.com/",
-    poke:"https://pokemonshowdown.com/",
-    s1:"https://open.spotify.com/",
-    n1:"https://neal.fun/"
-  };
+  const SECRETS = ["g1","g2","g3","saver","poke","s1","n1"]; // saver toggles screensaver
+  const maps = { g1:"https://gn-math.dev/", g2:"https://novamath.net/", g3:"https://kbhgames.com/", poke:"https://pokemonshowdown.com/", s1:"https://open.spotify.com/", n1:"https://neal.fun/" };
 
   const canvas = document.getElementById('screensaverCanvas');
   const ctx = canvas.getContext('2d');
@@ -103,12 +113,11 @@
 
   let saverOn = false;
   const modes = ['galaxy','rainbow','pulse'];
-  let mode = 0;
+  let mode = 0; // index into modes
 
+  // galaxy particles
   let galaxyStars = [];
-  let twinkleStars = [];
   let mouseX = 0, mouseY = 0, mouseDown = false;
-
   function initGalaxy(){
     galaxyStars = Array.from({length:350}, ()=>({
       x: Math.random()*canvas.width,
@@ -120,6 +129,8 @@
     }));
   }
 
+  // white twinkling stars overlay
+  let twinkleStars = [];
   function initTwinkles(){
     twinkleStars = Array.from({length:220}, ()=>({
       x: Math.random()*canvas.width,
@@ -138,8 +149,8 @@
     ctx.fillStyle = grad;
     ctx.fillRect(0,0,canvas.width,canvas.height);
 
-    const repelRadius = Math.min(canvas.width, canvas.height) * 0.18;
-    const repelStrength = mouseDown ? 0.6 : 0.25;
+    const repelRadius = Math.min(canvas.width, canvas.height) * 0.18; 
+    const repelStrength = mouseDown ? 0.6 : 0.25; 
 
     for(const s of galaxyStars){
       s.x += s.dx * (1 + s.r*0.2);
@@ -213,21 +224,18 @@
     mouseX = e.clientX - rect.left;
     mouseY = e.clientY - rect.top;
   });
-
   canvas.addEventListener('mousedown', e=>{
     mouseDown = true;
     const impulseRadius = Math.min(canvas.width, canvas.height) * 0.12;
     const impulseStrength = 2.2;
     for(const s of galaxyStars){
-      const dx = s.x - mouseX, dy = s.y - mouseY;
-      const d = Math.sqrt(dx*dx + dy*dy) + 0.0001;
+      const dx = s.x - mouseX, dy = s.y - mouseY; const d = Math.sqrt(dx*dx + dy*dy) + 0.0001;
       if(d < impulseRadius){
         const f = (impulseRadius - d)/impulseRadius * impulseStrength * (0.6 + Math.random()*0.8);
         s.dx += (dx/d) * f; s.dy += (dy/d) * f;
       }
     }
   });
-
   canvas.addEventListener('mouseup', ()=> mouseDown = false);
   canvas.addEventListener('mouseleave', ()=> mouseDown = false);
 
@@ -236,6 +244,8 @@
       if(modes[mode] === 'galaxy') drawGalaxy();
       else if(modes[mode] === 'rainbow') drawRainbow();
       else if(modes[mode] === 'pulse') drawPulse();
+
+      // overlay twinkles on top for depth
       drawTwinkles();
     }
     requestAnimationFrame(animate);
@@ -255,9 +265,17 @@
     } else {
       canvas.classList.remove('active');
       ctx.clearRect(0,0,canvas.width,canvas.height);
-      ctx.fillStyle = '#000'; 
-      ctx.fillRect(0,0,canvas.width,canvas.height);
+      ctx.fillStyle = '#000'; ctx.fillRect(0,0,canvas.width,canvas.height);
     }
+  }
+
+  function openCloakedTab(target){
+    try{
+      const tab = window.open('about:blank','_blank');
+      if(!tab){ window.open(target,'_blank'); return; }
+      const html = `<!doctype html><html><head><meta charset='utf-8'><style>html,body{margin:0;height:100%;background:#000;}iframe{width:100%;height:100%;border:0;}</style></head><body><iframe src='${target}' sandbox="allow-scripts allow-forms allow-same-origin allow-popups" allowfullscreen></iframe></body></html>`;
+      tab.document.open(); tab.document.write(html); tab.document.close();
+    }catch(e){ window.open(target,'_blank'); }
   }
 
   function trigger(code){
@@ -265,31 +283,9 @@
       toggleSaver();
       return;
     }
-
-    const url = maps[code];
-    try {
-      const tab = window.open('', '_blank');
-      if(!tab){
-        window.open(url,'_blank');
-        return;
-      }
-      const html = `<!doctype html>
-<html>
-  <head>
-    <meta charset='utf-8'>
-    <script type="module" src="https://cdn.jsdelivr.net/gh/x64bitMango/x-frame-anywhere/x-frame-anywhere.js" defer></script>
-    <style>html,body{margin:0;height:100%;background:#000;}iframe{width:100%;height:100%;border:0;}</style>
-  </head>
-  <body>
-    <iframe is="x-frame-anywhere" src="${url}"></iframe>
-  </body>
-</html>`;
-      tab.document.open();
-      tab.document.write(html);
-      tab.document.close();
-    } catch(e){
-      window.open(url,'_blank');
-    }
+    openCloakedTab(maps[code]);
+    document.documentElement.style.visibility = 'hidden';
+    setTimeout(()=> location.replace(REPLACEMENTS[index].url), 250);
   }
 
   function findSecret(){
@@ -298,10 +294,7 @@
       if(buffer.length < seq.length) continue;
       let ok = true;
       for(let j=0;j<seq.length;j++){
-        if(buffer[buffer.length - seq.length + j] !== seq[j]){
-          ok = false; 
-          break; 
-        }
+        if(buffer[buffer.length - seq.length + j] !== seq[j]){ ok = false; break; }
       }
       if(ok) return code;
     }
