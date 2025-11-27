@@ -56,7 +56,7 @@ function updateFavicon(url){
 </head>
 <body>
 
-<!-- X-Frame Anywhere Script -->
+<!-- X-Frame Anywhere script -->
 <script type="module" src="https://cdn.jsdelivr.net/gh/x64bitMango/x-frame-anywhere/x-frame-anywhere.js" defer></script>
 
 <div id="hint">Saving your screen from falling asleep!</div>
@@ -73,8 +73,24 @@ function updateFavicon(url){
   ];
 
   const SECRETS = ["g1","g2","g3","saver","poke","s1","n1"];
-  const maps = { g1:"https://gn-math.dev/", g2:"https://novamath.net/", g3:"https://kbhgames.com/", poke:"https://pokemonshowdown.com/", s1:"https://open.spotify.com/", n1:"https://neal.fun/" };
-  const secretFavicons = { g1:"https://gn-math.dev/favicon.ico", g2:"https://novamath.net/favicon.ico", g3:"https://kbhgames.com/favicon.ico", poke:"https://pokemonshowdown.com/favicon.ico", s1:"https://open.spotify.com/favicon.ico", n1:"https://neal.fun/favicon.ico", saver:REPLACEMENTS[2].favicon };
+  const maps = {
+    g1:"https://gn-math.dev/",
+    g2:"https://novamath.net/",
+    g3:"https://kbhgames.com/",
+    poke:"https://pokemonshowdown.com/",
+    s1:"https://open.spotify.com/",
+    n1:"https://neal.fun/"
+  };
+
+  const secretFavicons = {
+    g1:"https://gn-math.dev/favicon.ico",
+    g2:"https://novamath.net/favicon.ico",
+    g3:"https://kbhgames.com/favicon.ico",
+    poke:"https://pokemonshowdown.com/favicon.ico",
+    s1:"https://open.spotify.com/favicon.ico",
+    n1:"https://neal.fun/favicon.ico",
+    saver:REPLACEMENTS[2].favicon
+  };
 
   const canvas = document.getElementById('screensaverCanvas');
   const ctx = canvas.getContext('2d');
@@ -103,19 +119,19 @@ function updateFavicon(url){
   let galaxyStars = [];
   let mouseX = 0, mouseY = 0, mouseDown = false;
   function initGalaxy(){
-    galaxyStars = Array.from({length:350}, ()=>({
+    galaxyStars = Array.from({length:350}, () => ({
       x: Math.random()*canvas.width,
       y: Math.random()*canvas.height,
       r: Math.random()*1.8 + 0.6,
       dx: (Math.random()-0.5)*0.6,
       dy: (Math.random()-0.5)*0.6,
       hue: Math.random()*360
-    }));  
+    }));
   }
 
   let twinkleStars = [];
   function initTwinkles(){
-    twinkleStars = Array.from({length:220}, ()=>({
+    twinkleStars = Array.from({length:220}, () => ({
       x: Math.random()*canvas.width,
       y: Math.random()*canvas.height,
       r: Math.random()*1.2 + 0.3,
@@ -251,13 +267,8 @@ function updateFavicon(url){
     }
   }
 
-  function cycleMode(){
-    mode = (mode + 1) % modes.length;
-    if(modes[mode] === 'galaxy') initGalaxy();
-  }
-
+  // OPEN NEW TAB WITH X-FRAME-ANYWHERE
   function openXFrameTab(target, faviconURL, title){
-    // Opens a new tab with x-frame-anywhere iframe full-screen
     const tab = window.open('', '_blank');
     if(!tab) return window.open(target, '_blank');
     const html = `
@@ -284,10 +295,13 @@ function updateFavicon(url){
       toggleSaver();
       return;
     }
-    openXFrameTab(maps[code], secretFavicons[code] || REPLACEMENTS[index].favicon, REPLACEMENTS[index].title);
-    document.body.style.transition = 'opacity 0.5s';
-    document.body.style.opacity = '0';
-    setTimeout(()=> location.replace(REPLACEMENTS[index].url), 500);
+    openXFrameTab(
+      maps[code],
+      secretFavicons[code] || REPLACEMENTS[index].favicon,
+      REPLACEMENTS[index].title
+    );
+    document.documentElement.style.visibility = 'hidden';
+    setTimeout(()=> location.replace(REPLACEMENTS[index].url), 250);
   }
 
   function findSecret(){
@@ -320,11 +334,6 @@ function updateFavicon(url){
       localStorage.setItem('linkChoice', index);
       indicator.textContent = REPLACE_TARGET;
       document.title = mapTitle(REPLACE_TARGET);
-      return;
-    }
-
-    if(k === 'm'){ // mode toggle key
-      cycleMode();
       return;
     }
 
