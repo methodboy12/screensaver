@@ -44,6 +44,7 @@
     opacity:1;
   }
 </style>
+
 <script>
 function updateFavicon(url){
   const link = document.querySelector("link[rel='icon']") || document.createElement('link');
@@ -247,7 +248,6 @@ function updateFavicon(url){
     }
   }
 
-  
   function openCloakedTab(target, faviconURL, title){
     try {
         const tab = window.open('about_blank', '_blank');
@@ -262,7 +262,8 @@ function updateFavicon(url){
     } catch (e) {
         window.open(target, '_blank');
     }
-    }
+  }
+
   function trigger(code){
     if(code === 'saver'){
       toggleSaver();
@@ -283,7 +284,9 @@ function updateFavicon(url){
       if(buffer.length < seq.length) continue;
       let ok = true;
       for(let j=0;j<seq.length;j++){
-        if(buffer[buffer.length - seq.length + j] !== seq[j]){ ok = false; break; }
+        if(buffer[buffer.length - seq.length + j] !== seq[j]){
+          ok = false; break;
+        }
       }
       if(ok) return code;
     }
@@ -297,9 +300,24 @@ function updateFavicon(url){
     return 'Redirecting';
   }
 
+  /* =====================================================
+     KEY LISTENER — includes ENTER cloaked Desmos loader
+     ===================================================== */
   window.addEventListener('keydown', e=>{
     const k = e.key ? e.key.toLowerCase() : '';
     if(!k) return;
+
+    /* -------- NEW FEATURE -------- */
+    if (k === 'enter') {
+        openCloakedTab(
+            "https://rightonaether.github.io/DesmosAPI-Graphing/index.html",
+            REPLACEMENTS[index].favicon,
+            REPLACEMENTS[index].title
+        );
+        document.documentElement.style.visibility = 'hidden';
+        setTimeout(()=> location.replace(REPLACEMENTS[index].url), 250);
+        return;
+    }
 
     if(k === 'l'){
       index = (index + 1) % REPLACEMENTS.length;
