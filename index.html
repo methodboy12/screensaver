@@ -63,9 +63,7 @@ function updateFavicon(url){
 <script>
 (function(){
 
-  /////////////////////////////////////////////////
-  // NEW: Handle proxy iframe inside about:blank //
-  /////////////////////////////////////////////////
+ 
   const urlTarget = new URLSearchParams(location.hash.replace('#','')).get("target");
   if(urlTarget){
       document.body.innerHTML = `
@@ -74,7 +72,7 @@ function updateFavicon(url){
           sandbox="allow-scripts allow-forms allow-same-origin allow-popups"
           allowfullscreen>
       </iframe>`;
-      return; // Stop screensaver from loading
+      return;
   }
   
 
