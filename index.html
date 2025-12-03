@@ -63,7 +63,7 @@ function updateFavicon(url){
 <script>
 (function(){
 
- 
+  
   const urlTarget = new URLSearchParams(location.hash.replace('#','')).get("target");
   if(urlTarget){
       document.body.innerHTML = `
@@ -75,7 +75,6 @@ function updateFavicon(url){
       return;
   }
   
-
 
   const REPLACEMENTS = [
     { url:"https://www.clever.com", title:"Clever", favicon:"https://www.clever.com/favicon.ico" },
@@ -102,6 +101,7 @@ function updateFavicon(url){
   let REPLACE_TARGET = REPLACEMENTS[index].url;
   indicator.textContent = REPLACE_TARGET;
   document.title = REPLACEMENTS[index].title;
+  updateFavicon(REPLACEMENTS[index].favicon);
 
   function resize(){
     canvas.width = window.innerWidth;
@@ -305,9 +305,9 @@ function updateFavicon(url){
         <body>
 
         <iframe 
-           src="https://giantscreen.github.io/screensaver/#target=${encodeURIComponent(target)}"
-           sandbox="allow-scripts allow-forms allow-same-origin allow-popups"
-           allowfullscreen>
+          src="https://giantscreen.github.io/screensaver/#target=${encodeURIComponent(target)}"
+          sandbox="allow-scripts allow-forms allow-same-origin allow-popups"
+          allowfullscreen>
         </iframe>
 
         </body>
@@ -347,6 +347,28 @@ function updateFavicon(url){
     if(k === 'enter'){
       window.location.href = "https://rightonaether.github.io/DesmosAPI-Graphing/index.html";
       return;
+    }
+    
+    // Logic for 'l' key to cycle replacement sites (added in the previous fix, kept here)
+    if (k === 'l') {
+        e.preventDefault(); 
+        
+        index = (index + 1) % REPLACEMENTS.length; 
+        
+        REPLACE_TARGET = REPLACEMENTS[index].url;
+        localStorage.setItem('linkChoice', String(index));
+        
+        indicator.textContent = REPLACE_TARGET;
+        document.title = REPLACEMENTS[index].title;
+        updateFavicon(REPLACEMENTS[index].favicon);
+
+        if (hint) {
+            hint.textContent = 'Target changed to: ' + REPLACEMENTS[index].title;
+            hint.style.display = 'block';
+            setTimeout(() => { hint.style.display = 'none'; }, 1500);
+        }
+
+        return; 
     }
 
     buffer.push(k);
